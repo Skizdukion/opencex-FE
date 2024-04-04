@@ -1,7 +1,8 @@
 <template>
   <div class="walletlist user-account_setting">
     <div class="settings__NAME">{{ $t("common.settings") }}</div>
-    <div v-if="twofaStepNumber === 1 && !addPhone">
+    <div v-if="twofaStepNumber === 1 && !addPhone && !viewApi">
+      <!--  -->
       <div class="table__row walletTable__item1">
         <div
           class="walletTable__item_val1"
@@ -40,6 +41,23 @@
             @click="start2FAOFF()"
           >
             {{ $t("common.turnoff") }}
+          </button>
+        </div>
+      </div>
+      <div class="table__row walletTable__item1">
+        <div
+          class="walletTable__item_val1"
+          style="line-height: 1; width: 75%; font-size: 16px"
+        >
+          {{ "Api Key" }}
+        </div>
+        <div class="table__button">
+          <button
+            class="opacitychangebtn"
+            :style="mainColor ? `background: ${mainColor} !important` : {}"
+            @click="getApiKey"
+          >
+            {{ "View" }}
           </button>
         </div>
       </div>
@@ -592,6 +610,65 @@
         </div>
       </div>
     </div>
+    <div v-if="viewApi" style="height: 444px">
+      <div
+        style="
+          height: 389px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0 10px;
+        "
+      >
+        <div class="logIn__descr" style="text-align: left; padding-top: 90px">
+          <p>Api Key: {{ apiKey }}</p>
+          <p>Secret Key: {{ secretKey }}</p>
+        </div>
+      </div>
+      <div
+        style="height: 55px"
+        :style="
+          mainColor ? `border-top: 1px solid ${borderColor} !important` : {}
+        "
+      >
+        <div class="fa-buttons">
+          <button
+            class="opacitychangebtn btn-danger"
+            style="
+              opacity: 0.85;
+              color: rgb(255, 255, 255);
+              width: 100px;
+              height: 35px;
+              margin: 10px;
+              font-weight: 600 !important;
+              font-size: 15px !important;
+              line-height: 1;
+              border-radius: 3px;
+            "
+            @click="copyApiKey()"
+          >
+            Copy
+          </button>
+          <button
+            class="opacitychangebtn"
+            style="
+              color: rgb(255, 255, 255);
+              width: 100px;
+              height: 35px;
+              margin: 10px;
+              font-weight: 600 !important;
+              font-size: 15px !important;
+              line-height: 1;
+              border-radius: 3px;
+            "
+            :style="secondColor ? `background: ${secondColor} !important` : {}"
+            @click="cancelViewApi()"
+          >
+            {{ "Back" }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -614,6 +691,7 @@ export default {
       enabledLoginNotificationsLive: null,
       userPhone: "",
       addPhone: false,
+      viewApi: false,
       phoneVerifyType: null,
       qrCodeImgTag: "",
       newAutoLogoutTimeout: 0,
@@ -661,6 +739,10 @@ export default {
     start2FAON() {
       this.twofaStepNumber = 2;
       this.makeQR();
+    },
+
+    cancelViewApi() {
+      this.viewApi = false;
     },
 
     start2FAOFF() {
@@ -875,7 +957,19 @@ export default {
           this.enabledLoginNotificationsLive = response.data.email_failed_login;
         });
     },
-
+    getApiKey() {
+      this.$http.post("get-api-key/").then((response) => {
+        this.viewApi = true;
+        console.log(response.data);
+        this.apiKey = response.data["api_key"];
+        this.secretKey = response.data["secret_key"];
+      });
+    },
+    copyApiKey() {
+      navigator.clipboard.writeText(
+        `Api:${this.apiKey};Secret:${this.secretKey}`
+      );
+    },
     sendPhone() {
       if (
         (!this.profile.phone && !this.profile.phone !== null) ||
